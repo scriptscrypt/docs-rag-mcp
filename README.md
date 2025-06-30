@@ -88,7 +88,7 @@ curl -X POST http://localhost:3000/api/search \
 QDRANT_URL=http://localhost:6333
 QDRANT_API_KEY=your-qdrant-api-key
 OPENAI_API_KEY=your-openai-api-key
-GITHUB_TOKEN=your-fine-grained-token
+TOKEN_GITHUB=your-fine-grained-token
 ```
 
 ### Qdrant Collection Schema
