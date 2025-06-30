@@ -1,0 +1,28 @@
+{
+  "name": "jito-mcp",
+  "version": "1.0.0",
+  "description": "Jito Documentation Search MCP",
+  "main": "index.js",
+  "scripts": {
+    "dev": "ts-node scripts/index-docs.ts",
+    "index-docs": "ts-node scripts/index-docs.ts",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@qdrant/js-client-rest": "^1.14.1",
+    "openai": "^4.0.0",
+    "marked": "^11.1.0",
+    "glob": "^10.3.10",
+    "gray-matter": "^4.0.3",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "@types/marked": "^5.0.2",
+    "@types/yargs": "^17.0.32",
+    "typescript": "^5.3.3",
+    "ts-node": "^10.9.2",
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.11"
+  }
+} 

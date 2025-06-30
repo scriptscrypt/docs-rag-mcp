@@ -1,0 +1,64 @@
+name: Index Documentation
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Run every 6 hours
+  workflow_dispatch:  # Allow manual triggering
+  repository_dispatch:
+    types: [docs_updated]  # Can be triggered by webhook from docs repo
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run indexing with sync
+        run: pnpm run index-docs --sync
+        env:
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v39
+        with:
+          files: |
+            **.md
+            **.mdx
+
+      - name: Index changed documents
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          # For each changed file, run the indexing script
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "Indexing $file"
+            pnpm run index-docs --file "$file"
+          done
+        env:
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Full reindex
+        if: github.event_name == 'workflow_dispatch'
+        run: pnpm run index-docs
+        env:
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }} 
