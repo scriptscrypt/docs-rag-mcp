@@ -1,0 +1,33 @@
+{
+  "name": "jito-docs-search",
+  "version": "1.0.0",
+  "description": "Jito Documentation Search MCP",
+  "type": "search",
+  "endpoints": {
+    "search": {
+      "method": "POST",
+      "path": "/search",
+      "description": "Search through Jito documentation",
+      "parameters": {
+        "query": {
+          "type": "string",
+          "description": "The search query to find relevant Jito documentation"
+        }
+      }
+    }
+  },
+  "environment": {
+    "QDRANT_URL": {
+      "required": true,
+      "description": "URL of the Qdrant vector database"
+    },
+    "QDRANT_API_KEY": {
+      "required": true,
+      "description": "API key for Qdrant"
+    },
+    "OPENAI_API_KEY": {
+      "required": true,
+      "description": "OpenAI API key for embeddings"
+    }
+  }
+} 

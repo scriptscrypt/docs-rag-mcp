@@ -1,3 +1,4 @@
+import { config } from 'dotenv';
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { OpenAI } from 'openai';
 import { marked } from 'marked';
@@ -8,6 +9,10 @@ import matter from 'gray-matter';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { syncDocs } from './sync-docs';
+import { createHash } from 'crypto';
+
+// Load environment variables
+config();
 
 // Initialize clients
 const qdrant = new QdrantClient({
@@ -100,6 +105,11 @@ function getGitHubUrl(filePath: string): string {
   return `https://github.com/jito-foundation/jito-omnidocs/blob/master/${relativePath}`;
 }
 
+function generateId(filePath: string, chunkIndex: number): string {
+  const hash = createHash('md5').update(`${filePath}-${chunkIndex}`).digest('hex');
+  return hash;
+}
+
 async function processFile(filePath: string) {
   console.log(`Processing ${filePath}...`);
   
@@ -117,7 +127,7 @@ async function processFile(filePath: string) {
     const embedding = await generateEmbedding(chunk);
 
     points.push({
-      id: `${filePath}-${i}`,
+      id: generateId(filePath, i),
       content: chunk,
       metadata: {
         path: path.relative(DOCS_DIR, filePath),

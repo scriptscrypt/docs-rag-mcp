@@ -1,0 +1,13 @@
+{
+  "mcps": [
+    {
+      "name": "jito-docs-search",
+      "command": "pnpm",
+      "args": ["start"],
+      "cwd": ".",
+      "env": {
+        "NODE_PATH": "./node_modules"
+      }
+    }
+  ]
+} 
