@@ -13,6 +13,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 dotenv.config();
 
 const BASE_URL = "https://github.com/jito-foundation/jito-omnidocs/blob/master";
+const port = process.env.PORT || 3000;
 
 // Define types for Qdrant payload
 interface DocMetadata {
@@ -275,7 +276,7 @@ async function main() {
       res.status(400).send("No transport found for sessionId");
     }
   });
-  const port = 3000;
+
   app.listen(port, () => {
     console.log(`MCP SSE server listening on port ${port}`);
     console.log(`MCP SSE server running at http://localhost:${port}/sse`);
