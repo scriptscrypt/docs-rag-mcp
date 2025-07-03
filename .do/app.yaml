@@ -3,7 +3,7 @@ services:
   - name: reranker
     source_dir: /py
     github:
-      repo: your-username/your-repo-name
+      repo: sendaifun/devrel-mcp
       branch: main
     run_command: python main.py
     environment_slug: python
@@ -22,7 +22,7 @@ services:
   - name: mcp-server
     source_dir: /
     github:
-      repo: your-username/your-repo-name
+      repo: sendaifun/devrel-mcp
       branch: main
     build_command: pnpm install && pnpm build
     run_command: pnpm start
