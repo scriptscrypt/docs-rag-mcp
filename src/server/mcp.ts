@@ -48,6 +48,19 @@ interface QdrantPoint {
   shard_key?: string | number;
 }
 
+interface JinaRerankResult {
+  index: number;
+  relevance_score: number;
+}
+
+interface JinaRerankResponse {
+  model: string;
+  usage: {
+    total_tokens: number;
+  };
+  results: JinaRerankResult[];
+}
+
 // Initialize clients
 const qdrant = new QdrantClient({
   url: process.env.QDRANT_URL || "http://localhost:6333",
@@ -105,22 +118,38 @@ server.registerTool(
 
       // const rerankedResults = await rerankResults(query, results);
 
-      const rerankerUrl = process.env.RERANKER_URL || "http://localhost:5005";
-      const response = await fetch(`${rerankerUrl}/rerank`, {
+      // Use Jina AI's cloud reranking API
+      const jinaApiKey = process.env.JINA_API_KEY;
+      if (!jinaApiKey) {
+        throw new Error("JINA_API_KEY environment variable is required");
+      }
+
+      const response = await fetch("https://api.jina.ai/v1/rerank", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${jinaApiKey}`
+        },
         body: JSON.stringify({
+          model: "jina-reranker-v1-turbo-en",
           query,
-          docs: results.map(r => r.content)
+          documents: results.map((r: SearchResult) => r.content),
+          top_n: results.length, // Return all results, we'll handle limiting elsewhere
+          return_documents: false
         }),
       });
+
+      if (!response.ok) {
+        throw new Error(`Jina AI API error: ${response.status} ${response.statusText}`);
+      }
       
-      const { scores } = await response.json();
+            const jinaResponse: JinaRerankResponse = await response.json();
       
-      const reranked = results.map((r, i) => ({
-        ...r,
-        rerankScore: scores[i],
-      })).sort((a, b) => b.rerankScore - a.rerankScore);
+       // Map Jina AI results back to our results format
+       const reranked = jinaResponse.results.map((jinaResult: JinaRerankResult) => ({
+         ...results[jinaResult.index],
+         rerankScore: jinaResult.relevance_score,
+       })).sort((a: SearchResult & { rerankScore: number }, b: SearchResult & { rerankScore: number }) => b.rerankScore - a.rerankScore);
       
 
       console.log(reranked);
@@ -129,7 +158,7 @@ server.registerTool(
         content: [
           {
             type: "text",
-            text: reranked.map(r => 
+            text: reranked.map((r: SearchResult & { rerankScore: number }) => 
               `### ${r.metadata.title} (${r.metadata.section})\n\n${r.content}\n\n[Source](${BASE_URL}/${r.metadata.path})`
             ).join("\n\n")      
           },

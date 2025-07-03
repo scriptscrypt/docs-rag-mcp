@@ -7,6 +7,7 @@ A powerful documentation search service using RAG (Retrieval Augmented Generatio
 This MCP provides semantic search capabilities for Jito's documentation using:
 - Qdrant as the vector database
 - OpenAI embeddings for semantic understanding
+- Jina AI's cloud reranking service for improved result relevance
 - Automatic indexing through GitHub workflows
 - Real-time search via MCP endpoints
 
@@ -82,12 +83,27 @@ curl -X POST http://localhost:3000/api/search \
        - Contents: Read
        - Metadata: Read
 
+### Jina AI API Key Setup
+
+1. Go to [Jina AI](https://jina.ai/) and create an account
+2. Navigate to the API dashboard
+3. Generate a new API key
+4. Add the key to your environment variables as `JINA_API_KEY`
+
+**Benefits of Jina AI Cloud Reranking:**
+- Eliminates the need for local model hosting (saves ~2GB RAM)
+- Uses state-of-the-art `jina-reranker-v1-turbo-en` model
+- Faster inference with optimized cloud infrastructure
+- Automatic model updates and improvements
+- Pay-per-use pricing with generous free tier
+
 ### Environment Variables
 
 ```env
 QDRANT_URL=http://localhost:6333
 QDRANT_API_KEY=your-qdrant-api-key
 OPENAI_API_KEY=your-openai-api-key
+JINA_API_KEY=your-jina-api-key
 TOKEN_GITHUB=your-fine-grained-token
 ```
 
