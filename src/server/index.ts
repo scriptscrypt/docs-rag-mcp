@@ -123,6 +123,7 @@ const getServer = () => {
         const results = searchResults.map((result) => ({
           content: result.payload?.content || "",
           score: result.score,
+          id: result.id,
           metadata: result.payload?.metadata || {
             path: "",
             section: "",
@@ -146,7 +147,7 @@ const getServer = () => {
               body: JSON.stringify({
                 model: "jina-reranker-v1-turbo-en",
                 query,
-                documents: results.map((r: SearchResult) => r.content),
+                documents: results.map((r) => r.content),
                 top_n: results.length,
                 return_documents: false
               }),
@@ -159,7 +160,7 @@ const getServer = () => {
               reranked = jinaResponse.results.map((jinaResult: JinaRerankResult) => ({
                 ...results[jinaResult.index],
                 rerankScore: jinaResult.relevance_score,
-              })).sort((a: SearchResult & { rerankScore: number }, b: SearchResult & { rerankScore: number }) => b.rerankScore - a.rerankScore);
+              })).sort((a, b) => (b.rerankScore || 0) - (a.rerankScore || 0));
               
               console.log("Reranking successful");
             } else {
@@ -172,13 +173,19 @@ const getServer = () => {
 
         console.log(`Found ${reranked.length} results`);
 
+        // Return results in the standard format
+        const standardResults = reranked.map((r) => ({
+          id: String(r.id),
+          title: r.metadata.title || r.metadata.section || 'Untitled',
+          text: r.content.substring(0, 500) + (r.content.length > 500 ? '...' : ''), // Snippet for search results
+          url: `${BASE_URL}/${r.metadata.path}`,
+        }));
+
         return {
           content: [
             {
               type: "text",
-              text: reranked.map((r: SearchResult & { rerankScore?: number }) => 
-                `### ${r.metadata.title} (${r.metadata.section})\n\n${r.content}\n\n[Source](${BASE_URL}/${r.metadata.path})`
-              ).join("\n\n---\n\n")
+              text: JSON.stringify(standardResults, null, 2),
             },
           ],
         };
@@ -189,6 +196,91 @@ const getServer = () => {
             {
               type: "text",
               text: `Error performing search: ${error instanceof Error ? error.message : "Unknown error"}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // Register fetch tool
+  server.registerTool(
+    'fetch',
+    {
+      title: 'Fetch Jito Documentation',
+      description: 'Fetch the full content of a specific Jito documentation item by ID',
+      inputSchema: {
+        id: z.string().describe("The unique identifier for the document to fetch"),
+      },
+    },
+    async ({ id }): Promise<CallToolResult> => {
+      try {
+        console.log(`Fetching document with ID: ${id}`);
+        
+        // Get the specific document by ID from Qdrant
+        const result = await qdrant.retrieve("jito_docs", {
+          ids: [id],
+          with_payload: true,
+          with_vector: false,
+        });
+
+        if (!result.length || !result[0]) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Document with ID "${id}" not found`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        const document = result[0] as QdrantSearchResult;
+        const payload = document.payload;
+
+        if (!payload) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Document with ID "${id}" has no content`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        const fetchResult = {
+          id: String(document.id),
+          title: payload.metadata?.title || payload.metadata?.section || 'Untitled',
+          text: payload.content || '',
+          url: `${BASE_URL}/${payload.metadata?.path || ''}`,
+          metadata: {
+            path: payload.metadata?.path || '',
+            section: payload.metadata?.section || '',
+            lastUpdated: payload.metadata?.lastUpdated || '',
+          },
+        };
+
+        console.log(`Successfully fetched document: ${fetchResult.title}`);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(fetchResult, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        console.error("Fetch error:", error);
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error fetching document: ${error instanceof Error ? error.message : "Unknown error"}`,
             },
           ],
           isError: true,
