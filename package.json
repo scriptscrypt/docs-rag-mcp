@@ -2,19 +2,20 @@
   "name": "jito-mcp",
   "version": "1.0.0",
   "description": "Jito Documentation Search MCP",
-  "main": "dist/server/mcp.js",
+  "main": "dist/server/index.js",
   "engines": {
     "node": ">=18.12.0"
   },
   "scripts": {
-    "dev": "npx tsx watch src/server/mcp.ts",
-    "start": "node dist/server/mcp.js",
+    "dev": "npx tsx watch src/server/index.ts",
+    "dev:debug": "npx tsx watch --inspect src/server/index.ts",
+    "start": "node dist/server/index.js",
     "build": "tsc",
     "index-docs": "node --experimental-global-webcrypto --enable-source-maps --import tsx scripts/index-docs.ts",
     "test": "jest"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.13.2",
+    "@modelcontextprotocol/sdk": "1.15.0",
     "@qdrant/js-client-rest": "^1.14.1",
     "@types/cors": "^2.8.19",
     "@xenova/transformers": "^2.17.2",
