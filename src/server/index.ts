@@ -91,7 +91,7 @@ const getServer = () => {
   }, { capabilities: { logging: {} } });
 
   // Register Jito search tool
-  server.tool(
+  server.registerTool(
     'search',
     {
       title: 'Jito Documentation Search',
@@ -115,6 +115,7 @@ const getServer = () => {
         const searchResults = await qdrant.search("jito_docs", {
           vector: embedding.data[0].embedding,
           limit: limit,
+          with_payload: true,
           with_vector: false,
         }) as QdrantSearchResult[];
 
@@ -204,7 +205,7 @@ const getServer = () => {
   );
 
   // Register fetch tool
-  server.tool(
+  server.registerTool(
     'fetch',
     {
       title: 'Fetch Jito Documentation',
